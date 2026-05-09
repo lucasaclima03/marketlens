@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Claude Code local state (per-machine)
+.claude/settings.local.json
+
+# Playwright MCP scratch
+.playwright-mcp/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
