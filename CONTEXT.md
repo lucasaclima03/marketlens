@@ -54,8 +54,16 @@ _Avoid_: City, Cidade
 ### Ingestion
 
 **CuratedSeed**:
-The curated list (~300 SKUs) of essential basket items + popular SKUs that drives the high-cadence (1h) ingestion job. Stored as YAML in the repo. Sourced from DIEESE basic basket + manual curation of top items.
+The curated list (~300 SKUs) of essential basket items + popular SKUs that drives the high-cadence (1h) ingestion job. Each entry is a GTIN polled individually. Stored as YAML in the repo. Sourced from DIEESE basic basket + manual curation of top items. Complements **Discovery** (long-tail refresher).
 _Avoid_: Cesta básica (translates to user-facing ShoppingBasket), Seed list, Watchlist
+
+**Discovery**:
+The ingestion pipeline that refreshes long-tail prices and surfaces previously-unknown SKUs in a single mechanism. Each Discovery query is a wide-net sweep driven by a **DiscoverySeed**; SEFAZ returns every observation matching the filter, refreshing the price of every SKU in the result AND adding new GTINs to the catalog when seen. Complements CuratedSeed (which polls ~300 high-priority SKUs by GTIN at higher cadence). SKUs in GPC categories not covered by any DiscoverySeed are not refreshed after their first observation.
+_Avoid_: Crawl (was the original name `gpc-crawl`, replaced post-validation), Sweep, Scan
+
+**DiscoverySeed**:
+A curated `(description_token, gpc_code)` pair in YAML that drives one Discovery query. The token must be ≥3 chars (SEFAZ constraint) and broad enough to match many SKUs in the segment. Example: `("REFRIG", "50000000")` returned 17,046 observations across 22 distinct GTINs in Maceió during validation.
+_Avoid_: GpcSeed, CrawlSeed, DiscoveryQuery
 
 **ShoppingBasket** (roadmap, not MVP):
 A user-facing collection of products that the user wants to compare totals across establishments. Different concept from CuratedSeed.
