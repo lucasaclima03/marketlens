@@ -10,6 +10,7 @@ export default tseslint.config(
       'coverage/**',
       'node_modules/**',
       'drizzle/migrations/**',
+      'scripts/**',
       '**/*.config.js',
       '**/*.config.ts',
     ],
