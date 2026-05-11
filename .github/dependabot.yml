@@ -7,6 +7,13 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    # During the MVP phase, only auto-propose minor and patch bumps.
+    # Major bumps are revisited deliberately at the end of each milestone
+    # (see CONTEXT.md). To pick them up, comment "@dependabot show <pkg> ignore conditions"
+    # on any open PR, or temporarily remove this block.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
