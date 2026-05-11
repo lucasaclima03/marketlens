@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
+import { HealthCheckResult, HealthCheckService, HealthIndicatorService } from '@nestjs/terminus';
 import { getQueueToken } from '@nestjs/bullmq';
 import request from 'supertest';
 import { HealthController } from './health.controller.js';
@@ -23,6 +23,10 @@ describe('HealthController (smoke)', () => {
       controllers: [HealthController],
       providers: [
         { provide: HealthCheckService, useValue: { check: () => Promise.resolve(okResult) } },
+        {
+          provide: HealthIndicatorService,
+          useValue: { check: () => ({ up: () => ({}), down: () => ({}) }) },
+        },
         { provide: DATABASE, useValue: {} },
         { provide: getQueueToken(QUEUE_CURATED_SEED), useValue: {} },
       ],

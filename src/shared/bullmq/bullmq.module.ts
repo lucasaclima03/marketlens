@@ -19,13 +19,9 @@ import { QUEUE_CURATED_SEED } from './queues.js';
         },
       }),
     }),
-    BullModule.registerQueue({
-      name: QUEUE_CURATED_SEED,
-      settings: {
-        lockDuration: 60_000,
-        maxStalledCount: 1,
-      },
-    }),
+    // Worker-level options (lockDuration, maxStalledCount, concurrency) are set
+    // on the @Processor decorator in M2 when the processor class is introduced.
+    BullModule.registerQueue({ name: QUEUE_CURATED_SEED }),
   ],
   exports: [BullModule],
 })
