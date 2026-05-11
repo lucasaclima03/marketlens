@@ -15,7 +15,7 @@
     "start:api": "node dist/main-api.js",
     "start:worker": "node dist/main-worker.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "node --import @swc-node/register/esm-register scripts/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint . --no-error-on-unmatched-pattern",
     "lint:fix": "eslint . --fix --no-error-on-unmatched-pattern",
