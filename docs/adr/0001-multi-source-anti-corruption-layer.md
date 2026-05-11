@@ -83,7 +83,7 @@ Chosen option: **Option 1 — adapter per source producing `RawPriceObservation`
 
 ## Empirical evidence
 
-`N/A — principled architectural decision`. The choice is driven by stated multi-source intent and the cost asymmetry between adding the ACL upfront vs. retrofitting it later, not by measurement.
+N/A — principled architectural decision. The choice is driven by stated multi-source intent and the cost asymmetry between adding the ACL upfront vs. retrofitting it later, not by measurement.
 
 ## Validation criteria
 

@@ -144,7 +144,7 @@ Token selection follows six rules:
 - `CONTEXT.md` § Ingestion is updated in the same PR with new `Discovery` and `DiscoverySeed` entries; `CuratedSeed` entry is amended to reference Discovery as its complement.
 - Promotion criteria (Discovery SKU → `CuratedSeed`) are deferred to a future ADR — manual via YAML edit until then.
 - Stale-SKU lifecycle (a SKU that no DiscoverySeed catches anymore — the "fantasma" case) is deferred to a future ADR; for MVP these SKUs simply stop receiving updates and are detectable via M2.
-- Observability tooling for M1–M4 is tentatively Prometheus + Grafana, pending formalization in a separate Observability stack ADR.
+- Observability tooling for M1–M4 is defined in ADR-0004.
 
 ## Empirical evidence
 
@@ -182,7 +182,7 @@ Single-token short strings collide; multi-token AND queries are precise. This va
 
 ## Validation criteria
 
-Four metrics drive revisit. All measurements are tentatively emitted as Prometheus gauges via Pushgateway and rendered in a Grafana `discovery-health` dashboard; the full observability stack is pending a separate ADR.
+Four metrics drive revisit. All measurements are emitted and rendered via the observability stack defined in ADR-0004.
 
 | Metric | Definition | Threshold | Action |
 |---|---|---|---|
@@ -200,7 +200,7 @@ Cadence: review at 90 days post-deploy regardless of triggers.
 - Related ADRs:
   - ADR-0001 (multi-source ACL) — `DiscoverySeed` and Discovery code live under `src/sources/sefaz-al/discovery/`.
   - ADR-0002 (fixed cron cadence) — Discovery runs at the 6h cadence cravada there.
-  - ADR-NNNN (Observability stack — next in queue) — will formalize Prometheus + Grafana tooling referenced in *Validation criteria*.
+  - ADR-0004 (Observability stack) — formalizes the metric storage and rendering referenced in *Validation criteria*.
   - Future ADR — Promotion criteria from Discovery to `CuratedSeed`.
   - Future ADR — Stale SKU (fantasma) lifecycle and the role of `last_observed_at` on `Product`.
 - Memory: `project_sefaz_al_api_spec.md` (validation calls, false-positive evidence), `project_curated_seed_strategy.md`, `project_search_strategy.md`.

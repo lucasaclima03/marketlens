@@ -57,7 +57,7 @@ State the decision declaratively ("We will ..."). One to three sentences. Avoid 
 
 If this decision was driven or validated by measurement, cite it (API calls made, datasets inspected, benchmarks, prototype findings). Quote numbers when available.
 
-If principled rather than empirical: `N/A — principled architectural decision`.
+If principled rather than empirical: N/A — principled architectural decision.
 
 ## Validation criteria
 
