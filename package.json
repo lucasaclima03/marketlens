@@ -55,7 +55,7 @@
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-sonarjs": "^4.0.3",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^17.0.4",
     "msw": "^2.14.6",
     "prettier": "^3.8.3",
     "supertest": "^7.2.2",
