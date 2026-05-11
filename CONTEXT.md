@@ -54,7 +54,7 @@ _Avoid_: City, Cidade
 ### Ingestion
 
 **CuratedSeed**:
-The curated list (~300 SKUs) of essential basket items + popular SKUs that drives the high-cadence (3h) ingestion job. Stored as YAML in the repo. Sourced from DIEESE basic basket + manual curation of top items.
+The curated list (~300 SKUs) of essential basket items + popular SKUs that drives the high-cadence (1h) ingestion job. Stored as YAML in the repo. Sourced from DIEESE basic basket + manual curation of top items.
 _Avoid_: Cesta básica (translates to user-facing ShoppingBasket), Seed list, Watchlist
 
 **ShoppingBasket** (roadmap, not MVP):
