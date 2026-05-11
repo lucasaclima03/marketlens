@@ -1,0 +1,35 @@
+{
+  "name": "marketlens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Multi-source price intelligence aggregator for retail prices in Brazil.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "start:dev:api": "tsx watch src/main-api.ts",
+    "start:dev:worker": "tsx watch src/main-worker.ts",
+    "start:api": "node dist/main-api.js",
+    "start:worker": "node dist/main-worker.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli/main.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,js}": ["prettier --write", "eslint --fix"],
+    "*.{json,yml,yaml,md}": ["prettier --write"]
+  }
+}
