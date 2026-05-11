@@ -24,7 +24,12 @@ A canonical retail SKU identified primarily by normalized EAN (strip leading zer
 _Avoid_: SKU, Item, CanonicalProduct
 
 **PriceObservation**:
-A measurement we made: at `fetched_at`, this Product was seen at this Establishment with these prices. Versioned via SCD Type 2 — `valid_until` is extended when a subsequent fetch returns identical values; otherwise a new row is inserted. Carries both `declared_value` (issuer-declared) and `sale_value` (actual sale, post-discount), plus `sold_at` (when the sale recorded by the issuer occurred).
+A measurement we made: this Product was seen at this Establishment with these prices. Versioned via SCD Type 2 with three timestamps:
+- `fetched_at` records the first time we observed the `(declared_value, sale_value, sold_at)` tuple for this `(Product, Establishment)` (immutable per row)
+- `last_seen_at` records the most recent time we re-confirmed the same tuple (updated in place on identical re-fetches, no new row inserted)
+- `valid_until` is `'infinity'::timestamptz` for the current row and is set to `now()` when a different value supersedes it
+
+Equality across observations is on `(declared_value, sale_value, sold_at)` — `fetched_at` is our wall-clock, not source state, so it is NOT part of the predicate. Carries both `declared_value` (issuer-declared) and `sale_value` (actual sale, post-discount), plus `sold_at` (when the sale recorded by the issuer occurred).
 _Avoid_: Snapshot, PriceSnapshot, PriceRecord, PriceQuote, PriceReading
 
 **Establishment**:
@@ -107,12 +112,12 @@ The pipeline uses a tight vocabulary of 8 verbs. Each verb maps to one canonical
 
 The pipeline emits 4 events via `EventEmitterModule`. Listeners subscribe asynchronously (metrics, structured logs, future alerts).
 
-| Event | Fires when | Typical listener |
-|---|---|---|
-| **`PriceObservationCreated`** | `persist` inserts a new PriceObservation row | Increment `observations_created_total` |
-| **`PriceObservationExtended`** | `persist` extends `valid_until` of an existing observation (SCD dedup hit) | Increment `observations_extended_total` |
-| **`IngestionRejected`** | `validate` returns `Err(HardRejection)` and failure is recorded | Increment `ingestion_rejections_total{reason}`, log structured |
-| **`QualityFlagged`** | `flag` sets a non-null `quality_flag` on a PriceObservation | Increment `quality_flags_total{flag}`, future: trigger alert |
+| Event | Fires when | Payload | Typical listener |
+|---|---|---|---|
+| **`PriceObservationCreated`** | `persist` inserts a new PriceObservation row (Case A — no prior current row — or Case C — different value supersedes the prior current row) | `{ observation_id, product_id, establishment_id, source_id, kind: 'first_observation' \| 'price_change' }` | Increment `marketlens_price_observations_created_total{kind, source_id}` |
+| **`PriceObservationExtended`** | `persist` updates `last_seen_at` of an existing current observation (Case B — identical value re-confirmed) | `{ observation_id, product_id, establishment_id, source_id }` | Increment `marketlens_price_observations_extended_total{source_id}` |
+| **`IngestionRejected`** | `validate` returns `Err(HardRejection)` and failure is recorded | `{ source_id, reason, raw_payload }` | Increment `marketlens_ingestion_rejections_total{reason, source_id}`, log structured |
+| **`QualityFlagged`** | `flag` sets a non-null `quality_flag` on a PriceObservation | `{ observation_id, product_id, establishment_id, source_id, quality_flag }` | Increment `marketlens_quality_flags_total{quality_flag, source_id}`, future: trigger alert |
 
 ## Relationships
 
