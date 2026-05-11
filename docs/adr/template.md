@@ -45,12 +45,15 @@ State the decision declaratively ("We will ..."). One to three sentences. Avoid 
 ## Consequences
 
 **Positive:**
+
 - ...
 
 **Negative:**
+
 - ...
 
 **Neutral:**
+
 - ...
 
 ## Empirical evidence
@@ -62,6 +65,7 @@ If principled rather than empirical: N/A — principled architectural decision.
 ## Validation criteria
 
 When should we revisit this decision? Prefer a concrete trigger:
+
 - **Metric:** name of the signal (e.g. `sefaz_observation_age_seconds`)
 - **Threshold:** specific value that should prompt reopening
 - **Cadence:** when we will check

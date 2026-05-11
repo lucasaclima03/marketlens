@@ -33,6 +33,7 @@ If both questions stayed unanswered, the pipeline would ship blind, and each ins
 A self-hosted Prometheus + Loki + Grafana stack with Promtail shipping container stdout to Loki and `node_exporter` providing host-level metrics. The long-running worker exposes `/metrics` over HTTP for Prometheus to scrape on a fixed cadence. Batch jobs that compute M1–M4 do not push to a Pushgateway; instead they insert one row per execution into a Postgres table `observability_gauges`, which Grafana renders via its Postgres datasource. Grafana hosts a single user interface for dashboards and alerting, configured with three datasources (Prometheus, Loki, Postgres).
 
 **Pros:**
+
 - Open-source stack with broad ecosystem familiarity and portable query languages (PromQL, LogQL).
 - The Pushgateway last-write-wins behavior is avoided entirely: a stale gauge surfaces as a missing row in `observability_gauges`, not as a silently-scraped outdated value.
 - Postgres-backed gauges are transactional, durable, and naturally historized; the volume profile (tens of rows per day) is negligible against domain tables.
@@ -40,6 +41,7 @@ A self-hosted Prometheus + Loki + Grafana stack with Promtail shipping container
 - Cost is incremental disk and memory on the existing deployment host; no SaaS bill, no vendor lock-in.
 
 **Cons:**
+
 - Five additional containers (Prometheus, Loki, Grafana, Promtail, node_exporter) must be operated, including retention policies, upgrades, and disk monitoring.
 - Two query dialects coexist in Grafana: PromQL for pipeline runtime counters, SQL for M1–M4 gauges. Mitigated by separating dashboards by intent and datasource.
 - Dashboard discipline requires explicit export-and-commit after UI iteration; without it, modifications drift back to UI-only state and are lost on reset.
@@ -49,10 +51,12 @@ A self-hosted Prometheus + Loki + Grafana stack with Promtail shipping container
 Identical to Option 1 except M1–M4 batch jobs push gauge values to a Pushgateway container that Prometheus scrapes.
 
 **Pros:**
+
 - Single observability paradigm: all metrics live in Prometheus, queried via PromQL only.
 - Pushgateway is the documented Prometheus pattern for short-lived job metrics.
 
 **Cons:**
+
 - Pushgateway has no TTL: a batch job that silently stops running keeps serving its last pushed value indefinitely, masking the degradation it was meant to surface.
 - Not durable: container crash erases pushed metrics until the next job execution.
 - Adds a container for a small number of gauges; cost is disproportionate to value.
@@ -63,11 +67,13 @@ Identical to Option 1 except M1–M4 batch jobs push gauge values to a Pushgatew
 The application emits Prometheus remote-write metrics and ships logs to a managed Grafana Cloud tenant. The free tier covers approximately 10 000 active series, 50 GB of logs per month, and 14-day retention.
 
 **Pros:**
+
 - Zero observability containers on the host.
 - Same Grafana user interface, PromQL, and LogQL — the migration to or from self-hosted is a configuration change rather than a rewrite.
 - Backups, retention enforcement, and upgrades are provider responsibilities.
 
 **Cons:**
+
 - External dependency: a provider outage removes the operational view of the system.
 - Retention of 14 days is below the floor required by M2 (sustained 14-day evaluation) and M4 (trailing 3-month evaluation).
 - Free-tier terms are provider-controlled and may change.
@@ -78,11 +84,13 @@ The application emits Prometheus remote-write metrics and ships logs to a manage
 A single stack based on ClickHouse, ingesting metrics, logs, and traces via OpenTelemetry. Replaces Prometheus + Loki + Grafana with one product.
 
 **Pros:**
+
 - One mental model (OpenTelemetry end-to-end); future-proof if distributed tracing becomes a requirement.
 - Modern user interface with better out-of-the-box experience than vanilla Grafana.
 - Tracing is included, which would benefit cross-service latency debugging if the architecture grows.
 
 **Cons:**
+
 - ClickHouse alone has substantial memory requirements that conflict with the host's constrained budget.
 - Community an order of magnitude smaller than the Prometheus/Grafana ecosystem; fewer reference materials and integrations.
 - Push-style gauges from batch jobs require OpenTelemetry metrics with delta temporality — less documented and less idiomatic than the Prometheus equivalent.
@@ -93,10 +101,12 @@ A single stack based on ClickHouse, ingesting metrics, logs, and traces via Open
 A single-agent commercial SaaS with premium UI, mature alerting, and on-call platform integrations.
 
 **Pros:**
+
 - Best-in-class developer experience.
 - No operational responsibility for the observability infrastructure itself.
 
 **Cons:**
+
 - Recurring monthly cost scales with host count, custom metric series, and log volume.
 - Vendor lock-in: proprietary dashboard format, alert format, and query languages.
 - Disproportionate for a single-host, single-developer project with no real on-call rotation.
@@ -133,34 +143,34 @@ The M1–M4 jobs `INSERT` one row per execution. Grafana panels for M1–M4 quer
 
 **Retention profile (balanced):**
 
-| Datastore | Retention | Rationale |
-|---|---|---|
-| Prometheus | 30 days | Covers M2 sustained 14-day evaluation with margin. |
-| Loki | 14 days | Matches the typical interactive debugging window and bounds the storage impact of any log-loop incident. |
-| Postgres `observability_gauges` | 365 days | Volume is negligible; preserves M4 trailing 3 months and the 90-day post-deploy revisit cadence. |
+| Datastore                       | Retention | Rationale                                                                                                |
+| ------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| Prometheus                      | 30 days   | Covers M2 sustained 14-day evaluation with margin.                                                       |
+| Loki                            | 14 days   | Matches the typical interactive debugging window and bounds the storage impact of any log-loop incident. |
+| Postgres `observability_gauges` | 365 days  | Volume is negligible; preserves M4 trailing 3 months and the 90-day post-deploy revisit cadence.         |
 
 **Alerting via Grafana Alerting, with nine initial rules.** All rules are committed as code under `infra/grafana/alerts/` and delivered to an informal webhook channel. Specific thresholds are calibrated post-deploy and documented in the operations runbook, not in this ADR.
 
-| # | Alert | Class |
-|---|---|---|
-| 1 | Worker process unreachable | Process |
-| 2 | BullMQ queue stalled (waiting jobs grow while completions stall) | Pipeline |
-| 3 | External source (SEFAZ) failure rate elevated | External dependency |
-| 4 | M2 sustained above threshold for 14 days | Domain (slow-burn) |
-| 5 | Filesystem free space below 10 % | Host |
-| 6 | Database connection pool above 80 % capacity | Database |
-| 7 | Host memory available below 10 % | Host |
-| 8 | Host swap usage above 50 % | Host |
-| 9 | Host load-average above twice the CPU count | Host |
+| #   | Alert                                                            | Class               |
+| --- | ---------------------------------------------------------------- | ------------------- |
+| 1   | Worker process unreachable                                       | Process             |
+| 2   | BullMQ queue stalled (waiting jobs grow while completions stall) | Pipeline            |
+| 3   | External source (SEFAZ) failure rate elevated                    | External dependency |
+| 4   | M2 sustained above threshold for 14 days                         | Domain (slow-burn)  |
+| 5   | Filesystem free space below 10 %                                 | Host                |
+| 6   | Database connection pool above 80 % capacity                     | Database            |
+| 7   | Host memory available below 10 %                                 | Host                |
+| 8   | Host swap usage above 50 %                                       | Host                |
+| 9   | Host load-average above twice the CPU count                      | Host                |
 
 **Naming convention for custom metrics.** Namespace `marketlens_`, snake_case, SI base units (`_seconds`, `_bytes`, `_total`). Four counters are fixed by contract (one per domain event in `CONTEXT.md`):
 
-| Domain event | Counter | Labels |
-|---|---|---|
-| `PriceObservationCreated` | `marketlens_price_observation_created_total` | `source` |
-| `PriceObservationExtended` | `marketlens_price_observation_extended_total` | `source` |
-| `IngestionRejected` | `marketlens_ingestion_rejected_total` | `source`, `reason` |
-| `QualityFlagged` | `marketlens_quality_flagged_total` | `flag` |
+| Domain event               | Counter                                       | Labels             |
+| -------------------------- | --------------------------------------------- | ------------------ |
+| `PriceObservationCreated`  | `marketlens_price_observation_created_total`  | `source`           |
+| `PriceObservationExtended` | `marketlens_price_observation_extended_total` | `source`           |
+| `IngestionRejected`        | `marketlens_ingestion_rejected_total`         | `source`, `reason` |
+| `QualityFlagged`           | `marketlens_quality_flagged_total`            | `flag`             |
 
 The four Postgres gauges have fixed names in `observability_gauges.name`: `m1_curated_skus_uncovered`, `m2_p95_age_hours`, `m3_gpc_segments_without_seed_coverage`, `m4_curation_commits_30d`.
 
@@ -211,13 +221,13 @@ N/A — principled architectural decision. The choice rests on three known input
 
 Five concrete revisit triggers. Each is observable from the stack itself.
 
-| Trigger | Signal | Threshold | Action |
-|---|---|---|---|
-| Host saturation | `node_memory_MemAvailable / node_memory_MemTotal` and `node_filesystem_avail / node_filesystem_size` | Either below 10 % sustained for 7 days | Migrate metrics and logs to a managed observability provider; preserve query languages. |
-| Log volume blowup | Loki ingestion rate | Above 5 GB/day sustained for 3 days | Tighten Promtail filters or reduce Loki retention to 7 days; investigate the offending log path. |
-| Long-tail debugging demand | Manual count of operator queries against logs older than 14 days | At least 3 events in 6 months | Raise Loki retention to 30 days. |
-| Curation overhead unmanageable | M4 sustained above 8 hours/month for 3 months **and** (M1 or M2 elevated) | Combined trigger per ADR-0003 | Reconsider the hybrid auto-suggester option deferred by ADR-0003. The observability stack itself is unaffected; this triggers a separate ADR. |
-| Alert delivery unreliable | Missed alert documented in an incident post-mortem | 1 event | Migrate from the current webhook channel to a self-hosted notification service; revisit channel choice in this ADR. |
+| Trigger                        | Signal                                                                                               | Threshold                              | Action                                                                                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Host saturation                | `node_memory_MemAvailable / node_memory_MemTotal` and `node_filesystem_avail / node_filesystem_size` | Either below 10 % sustained for 7 days | Migrate metrics and logs to a managed observability provider; preserve query languages.                                                       |
+| Log volume blowup              | Loki ingestion rate                                                                                  | Above 5 GB/day sustained for 3 days    | Tighten Promtail filters or reduce Loki retention to 7 days; investigate the offending log path.                                              |
+| Long-tail debugging demand     | Manual count of operator queries against logs older than 14 days                                     | At least 3 events in 6 months          | Raise Loki retention to 30 days.                                                                                                              |
+| Curation overhead unmanageable | M4 sustained above 8 hours/month for 3 months **and** (M1 or M2 elevated)                            | Combined trigger per ADR-0003          | Reconsider the hybrid auto-suggester option deferred by ADR-0003. The observability stack itself is unaffected; this triggers a separate ADR. |
+| Alert delivery unreliable      | Missed alert documented in an incident post-mortem                                                   | 1 event                                | Migrate from the current webhook channel to a self-hosted notification service; revisit channel choice in this ADR.                           |
 
 Cadence: review at 90 days post-deploy regardless of triggers.
 

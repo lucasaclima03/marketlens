@@ -25,6 +25,7 @@ _Avoid_: SKU, Item, CanonicalProduct
 
 **PriceObservation**:
 A measurement we made: this Product was seen at this Establishment with these prices. Versioned via SCD Type 2 with three timestamps:
+
 - `fetched_at` records the first time we observed the `(declared_value, sale_value, sold_at)` tuple for this `(Product, Establishment)` (immutable per row)
 - `last_seen_at` records the most recent time we re-confirmed the same tuple (updated in place on identical re-fetches, no new row inserted)
 - `valid_until` is `'infinity'::timestamptz` for the current row and is set to `now()` when a different value supersedes it
@@ -88,16 +89,16 @@ _Avoid_: Outlier, Anomaly (these can refer to either HardRejection or QualityFla
 
 The pipeline uses a tight vocabulary of 8 verbs. Each verb maps to one canonical method name; synonyms are forbidden by convention.
 
-| Verb | Layer | Method | Returns |
-|---|---|---|---|
-| **fetch** | Source client | `SefazAlClient.fetch(query)` | `SefazAlPriceResponse` |
-| **adapt** | Source adapter (Anti-Corruption Layer) | `SefazAlAdapter.adapt(item)` | `RawPriceObservation` |
-| **validate** | Validation layer | `Validator.validate(raw)` | `Result<RawPriceObservation, HardRejection>` |
-| **normalize** | Normalization service | `NormalizationService.normalize(raw)` | `{ product, observationData }` |
-| **persist** | Repository | `Repository.persist(product, observationData)` | `PriceObservation` |
-| **flag** | Quality detector (async, via domain event listener) | `OutlierDetector.flag(observation)` | mutates `quality_flag` |
-| **ingest** | Orchestrator | `IngestionService.ingest(query)` | `IngestionResult` |
-| **search** | Read-side service | `SearchService.search(query)` | `Page<Product>` |
+| Verb          | Layer                                               | Method                                         | Returns                                      |
+| ------------- | --------------------------------------------------- | ---------------------------------------------- | -------------------------------------------- |
+| **fetch**     | Source client                                       | `SefazAlClient.fetch(query)`                   | `SefazAlPriceResponse`                       |
+| **adapt**     | Source adapter (Anti-Corruption Layer)              | `SefazAlAdapter.adapt(item)`                   | `RawPriceObservation`                        |
+| **validate**  | Validation layer                                    | `Validator.validate(raw)`                      | `Result<RawPriceObservation, HardRejection>` |
+| **normalize** | Normalization service                               | `NormalizationService.normalize(raw)`          | `{ product, observationData }`               |
+| **persist**   | Repository                                          | `Repository.persist(product, observationData)` | `PriceObservation`                           |
+| **flag**      | Quality detector (async, via domain event listener) | `OutlierDetector.flag(observation)`            | mutates `quality_flag`                       |
+| **ingest**    | Orchestrator                                        | `IngestionService.ingest(query)`               | `IngestionResult`                            |
+| **search**    | Read-side service                                   | `SearchService.search(query)`                  | `Page<Product>`                              |
 
 ### Eliminated synonyms
 
@@ -112,12 +113,12 @@ The pipeline uses a tight vocabulary of 8 verbs. Each verb maps to one canonical
 
 The pipeline emits 4 events via `EventEmitterModule`. Listeners subscribe asynchronously (metrics, structured logs, future alerts).
 
-| Event | Fires when | Payload | Typical listener |
-|---|---|---|---|
-| **`PriceObservationCreated`** | `persist` inserts a new PriceObservation row (Case A — no prior current row — or Case C — different value supersedes the prior current row) | `{ observation_id, product_id, establishment_id, source_id, kind: 'first_observation' \| 'price_change' }` | Increment `marketlens_price_observations_created_total{kind, source_id}` |
-| **`PriceObservationExtended`** | `persist` updates `last_seen_at` of an existing current observation (Case B — identical value re-confirmed) | `{ observation_id, product_id, establishment_id, source_id }` | Increment `marketlens_price_observations_extended_total{source_id}` |
-| **`IngestionRejected`** | `validate` returns `Err(HardRejection)` and failure is recorded | `{ source_id, reason, raw_payload }` | Increment `marketlens_ingestion_rejections_total{reason, source_id}`, log structured |
-| **`QualityFlagged`** | `flag` sets a non-null `quality_flag` on a PriceObservation | `{ observation_id, product_id, establishment_id, source_id, quality_flag }` | Increment `marketlens_quality_flags_total{quality_flag, source_id}`, future: trigger alert |
+| Event                          | Fires when                                                                                                                                  | Payload                                                                                                    | Typical listener                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **`PriceObservationCreated`**  | `persist` inserts a new PriceObservation row (Case A — no prior current row — or Case C — different value supersedes the prior current row) | `{ observation_id, product_id, establishment_id, source_id, kind: 'first_observation' \| 'price_change' }` | Increment `marketlens_price_observations_created_total{kind, source_id}`                   |
+| **`PriceObservationExtended`** | `persist` updates `last_seen_at` of an existing current observation (Case B — identical value re-confirmed)                                 | `{ observation_id, product_id, establishment_id, source_id }`                                              | Increment `marketlens_price_observations_extended_total{source_id}`                        |
+| **`IngestionRejected`**        | `validate` returns `Err(HardRejection)` and failure is recorded                                                                             | `{ source_id, reason, raw_payload }`                                                                       | Increment `marketlens_ingestion_rejections_total{reason, source_id}`, log structured       |
+| **`QualityFlagged`**           | `flag` sets a non-null `quality_flag` on a PriceObservation                                                                                 | `{ observation_id, product_id, establishment_id, source_id, quality_flag }`                                | Increment `marketlens_quality_flags_total{quality_flag, source_id}`, future: trigger alert |
 
 ## Relationships
 

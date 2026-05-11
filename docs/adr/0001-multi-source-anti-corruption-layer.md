@@ -29,12 +29,14 @@ MarketLens aggregates retail price data and SEFAZ Alagoas is the first source, b
 Each source has its own folder (`sources/sefaz-al/`) containing a typed client, a Zod boundary schema (`SefazAlPriceItem`), and an adapter (`SefazAlAdapter`) whose only job is to translate source-specific DTOs into the canonical internal type `RawPriceObservation`. Everything downstream (`Validator`, `NormalizationService`, `Repository`) consumes only the canonical type.
 
 **Pros:**
+
 - Domain entities never reference `sourceId` except via the `source_id` column on `PriceObservation`
 - New source = new folder; existing code untouched
 - Normalization tests use `RawPriceObservation` fixtures, fast and source-free
 - Source-specific raw shapes can be archived for future replay
 
 **Cons:**
+
 - One extra type and one extra mapping function per source (~30–50 lines per source)
 - Two places to update when a source adds a field we want to surface (boundary schema + adapter)
 
@@ -43,9 +45,11 @@ Each source has its own folder (`sources/sefaz-al/`) containing a typed client, 
 Skip the canonical intermediate. The SEFAZ adapter produces domain entities directly.
 
 **Pros:**
+
 - Less code today (no `RawPriceObservation` type)
 
 **Cons:**
+
 - Adding a second source requires either duplicating normalization in the new adapter or introducing source conditionals inside the normalizer — the very coupling we want to avoid
 - Domain entities accidentally inherit SEFAZ-specific assumptions (field cardinality, optional/required mix)
 - Cannot replay raw data with improved normalization — the canonical shape is the only thing persisted
@@ -55,9 +59,11 @@ Skip the canonical intermediate. The SEFAZ adapter produces domain entities dire
 Make the SEFAZ DTO the project's canonical type.
 
 **Pros:**
+
 - Zero translation cost
 
 **Cons:**
+
 - Forecloses multi-source forever
 - Bakes "SEFAZ" into domain naming throughout the codebase
 - Reverses the project's stated multi-source intent
@@ -69,16 +75,19 @@ Chosen option: **Option 1 — adapter per source producing `RawPriceObservation`
 ## Consequences
 
 **Positive:**
+
 - Domain entities (`Product`, `PriceObservation`, `Establishment`) remain source-agnostic
 - Adding a second source is mechanical: new folder, new schema, new adapter, new tests
 - Normalization tests are fast and use clean `RawPriceObservation` fixtures
 - Optional future capability: archive `RawPriceObservation` for replay without re-fetching
 
 **Negative:**
+
 - One extra type plus one mapping function per source
 - Two-step lookup when debugging a field origin (DTO schema → adapter → domain)
 
 **Neutral:**
+
 - `sourceId` lives on `RawPriceObservation` and inside `sources/<source>/` only; it is captured on `PriceObservation.source_id` for audit, but not used in domain logic
 
 ## Empirical evidence
