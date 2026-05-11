@@ -24,27 +24,32 @@ export class HealthController {
   @Get()
   @HealthCheck()
   check() {
-    return this.health.check([() => this.checkPostgres(), () => this.checkRedis()]);
+    return this.health.check([
+      () => this.runIndicator('postgres', () => this.probePostgres()),
+      () => this.runIndicator('redis', () => this.probeRedis()),
+    ]);
   }
 
-  private async checkPostgres(): Promise<HealthIndicatorResult> {
-    const indicator = this.indicators.check('postgres');
+  private async runIndicator(
+    name: string,
+    probe: () => Promise<void>,
+  ): Promise<HealthIndicatorResult> {
+    const indicator = this.indicators.check(name);
     try {
-      await this.db.execute(sql`SELECT 1`);
+      await probe();
       return indicator.up();
     } catch (err) {
       return indicator.down({ message: (err as Error).message });
     }
   }
 
-  private async checkRedis(): Promise<HealthIndicatorResult> {
-    const indicator = this.indicators.check('redis');
-    try {
-      const client = await this.curatedSeedQueue.client;
-      const pong = await client.ping();
-      return pong === 'PONG' ? indicator.up() : indicator.down({ message: 'unexpected reply' });
-    } catch (err) {
-      return indicator.down({ message: (err as Error).message });
-    }
+  private async probePostgres(): Promise<void> {
+    await this.db.execute(sql`SELECT 1`);
+  }
+
+  private async probeRedis(): Promise<void> {
+    const client = await this.curatedSeedQueue.client;
+    const pong = await client.ping();
+    if (pong !== 'PONG') throw new Error('unexpected reply');
   }
 }

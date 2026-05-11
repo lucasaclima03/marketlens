@@ -14,7 +14,7 @@ import type { Env } from '../config/env.schema.js';
             config.get('NODE_ENV', { infer: true }) === 'development'
               ? { target: 'pino-pretty', options: { singleLine: true, colorize: true } }
               : undefined,
-          autoLogging: true,
+          autoLogging: { ignore: (req) => req.url === '/health' },
           redact: {
             paths: [
               'req.headers.authorization',

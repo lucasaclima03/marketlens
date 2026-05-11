@@ -6,11 +6,14 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter as BullBoardExpressAdapter } from '@bull-board/express';
+import { getQueueToken } from '@nestjs/bullmq';
 import express from 'express';
 import { Queue } from 'bullmq';
 import { AppModule } from './app.module.js';
 import type { Env } from './shared/config/env.schema.js';
 import { QUEUE_CURATED_SEED } from './shared/bullmq/queues.js';
+
+const BULL_BOARD_BASE_PATH = '/admin/queues';
 
 async function bootstrap(): Promise<void> {
   const server = express();
@@ -23,14 +26,14 @@ async function bootstrap(): Promise<void> {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
   const port = config.get('PORT', { infer: true });
 
-  const curatedSeedQueue = app.get<Queue>(`BullQueue_${QUEUE_CURATED_SEED}`);
-  const bullBoard = new BullBoardExpressAdapter();
-  bullBoard.setBasePath('/admin/queues');
-  createBullBoard({
-    queues: [new BullMQAdapter(curatedSeedQueue)],
-    serverAdapter: bullBoard,
-  });
-  server.use('/admin/queues', bullBoard.getRouter());
+  // Bull Board exposes queue internals with no auth; only mount outside production.
+  if (config.get('NODE_ENV', { infer: true }) !== 'production') {
+    const queue = app.get<Queue>(getQueueToken(QUEUE_CURATED_SEED));
+    const bullBoard = new BullBoardExpressAdapter();
+    bullBoard.setBasePath(BULL_BOARD_BASE_PATH);
+    createBullBoard({ queues: [new BullMQAdapter(queue)], serverAdapter: bullBoard });
+    server.use(BULL_BOARD_BASE_PATH, bullBoard.getRouter());
+  }
 
   await app.listen(port);
   app.get(PinoLogger).log(`API process listening on port ${port}`);
