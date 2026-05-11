@@ -47,7 +47,7 @@
     "@testcontainers/redis": "^10.28.0",
     "@types/express": "^5.0.6",
     "@types/node": "^22.19.18",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^2.1.9",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.27.2",
