@@ -1,6 +1,17 @@
 import { defineConfig } from 'vitest/config';
+import swc from 'unplugin-swc';
 
 export default defineConfig({
+  plugins: [
+    swc.vite({
+      jsc: {
+        target: 'es2023',
+        parser: { syntax: 'typescript', decorators: true },
+        transform: { decoratorMetadata: true, legacyDecorator: true },
+        keepClassNames: true,
+      },
+    }),
+  ],
   test: {
     globals: false,
     environment: 'node',
