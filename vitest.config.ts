@@ -26,10 +26,11 @@ export default defineConfig({
         functions: 80,
         lines: 80,
       },
+      include: ['src/**/*.ts'],
       exclude: [
         '**/*.module.ts',
         '**/main-*.ts',
-        '**/*.config.ts',
+        '**/*.config.{ts,js}',
         'src/shared/db/schema/**',
         'src/shared/db/client.ts',
         'src/shared/bullmq/queues.ts',
