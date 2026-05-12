@@ -44,6 +44,42 @@ describe('Result', () => {
   it('err() wraps an error with ok:false', () => {
     expect(err('boom')).toEqual({ ok: false, error: 'boom' });
   });
+
+  it('ok() preserves reference identity of the wrapped value', () => {
+    const payload = { nested: { deep: true } };
+    const result = ok(payload);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toBe(payload);
+    }
+  });
+
+  it('err() preserves reference identity of the wrapped error', () => {
+    const cause = new Error('downstream');
+    const result = err(cause);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe(cause);
+    }
+  });
+
+  it('ok() accepts falsy values without treating them as absence', () => {
+    expect(ok(0)).toEqual({ ok: true, value: 0 });
+    expect(ok(false)).toEqual({ ok: true, value: false });
+    expect(ok('')).toEqual({ ok: true, value: '' });
+    expect(ok(null)).toEqual({ ok: true, value: null });
+    expect(ok(undefined)).toEqual({ ok: true, value: undefined });
+  });
+
+  it('ok() result carries no "error" key (clean discriminator)', () => {
+    const result = ok(1);
+    expect('error' in result).toBe(false);
+  });
+
+  it('err() result carries no "value" key (clean discriminator)', () => {
+    const result = err('x');
+    expect('value' in result).toBe(false);
+  });
 });
 
 describe('HardRejection', () => {
@@ -53,12 +89,26 @@ describe('HardRejection', () => {
     expect(rejection.raw_payload).toBe(sampleRaw);
   });
 
-  it('HARD_REJECTION_REASONS lists the closed enum', () => {
+  it('HARD_REJECTION_REASONS lists the closed enum (exactly 3 reasons)', () => {
     expect(HARD_REJECTION_REASONS).toEqual([
       'gtin_invalid_length',
       'gtin_invalid_check_digit',
       'sale_value_out_of_range',
     ]);
+    expect(HARD_REJECTION_REASONS).toHaveLength(3);
+  });
+
+  it.each([...HARD_REJECTION_REASONS])('hardRejection() accepts reason %s', (reason) => {
+    const rejection = hardRejection(reason, sampleRaw);
+    expect(rejection.reason).toBe(reason);
+    expect(rejection.raw_payload).toBe(sampleRaw);
+  });
+
+  it('hardRejection() preserves reference identity of the raw_payload (no defensive clone)', () => {
+    const rejection = hardRejection('gtin_invalid_length', sampleRaw);
+    expect(rejection.raw_payload).toBe(sampleRaw);
+    expect(rejection.raw_payload.establishment).toBe(sampleRaw.establishment);
+    expect(rejection.raw_payload.sold_at).toBe(sampleRaw.sold_at);
   });
 });
 
@@ -72,6 +122,27 @@ describe('IngestionResult', () => {
       skipped: 0,
     });
   });
+
+  it('emptyIngestionResult() returns a fresh object on every call (not a shared singleton)', () => {
+    const a = emptyIngestionResult();
+    const b = emptyIngestionResult();
+    expect(a).not.toBe(b);
+    expect(a).toEqual(b);
+  });
+
+  it('mutating one IngestionResult does not bleed into a later call', () => {
+    const first = emptyIngestionResult() as { fetched: number };
+    first.fetched = 999;
+    const second = emptyIngestionResult();
+    expect(second.fetched).toBe(0);
+  });
+
+  it('emptyIngestionResult() exposes exactly the five expected counter keys', () => {
+    const byLocale = (a: string, b: string): number => a.localeCompare(b);
+    expect(Object.keys(emptyIngestionResult()).sort(byLocale)).toEqual(
+      ['extended', 'fetched', 'persisted', 'rejected', 'skipped'].sort(byLocale),
+    );
+  });
 });
 
 describe('events', () => {
@@ -79,6 +150,15 @@ describe('events', () => {
     expect(EVENT_PRICE_OBSERVATION_CREATED).toBe('price_observation.created');
     expect(EVENT_PRICE_OBSERVATION_EXTENDED).toBe('price_observation.extended');
     expect(EVENT_INGESTION_REJECTED).toBe('ingestion.rejected');
+  });
+
+  it('event names are pairwise distinct (no copy-paste collisions)', () => {
+    const names = new Set([
+      EVENT_PRICE_OBSERVATION_CREATED,
+      EVENT_PRICE_OBSERVATION_EXTENDED,
+      EVENT_INGESTION_REJECTED,
+    ]);
+    expect(names.size).toBe(3);
   });
 });
 
@@ -88,5 +168,10 @@ describe('JobContext', () => {
     const discovery: JobContext = { kind: 'discovery' };
     expect(curated.kind).toBe('curated_seed');
     expect(discovery.kind).toBe('discovery');
+  });
+
+  it('discovery JobContext carries no queriedGtin at runtime', () => {
+    const discovery: JobContext = { kind: 'discovery' };
+    expect('queriedGtin' in discovery).toBe(false);
   });
 });
