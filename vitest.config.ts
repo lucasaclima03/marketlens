@@ -32,6 +32,7 @@ export default defineConfig({
       exclude: [
         '**/*.module.ts',
         '**/main-*.ts',
+        'src/cli/main.ts',
         '**/*.config.{ts,js}',
         'src/shared/db/schema/**',
         'src/shared/db/client.ts',
