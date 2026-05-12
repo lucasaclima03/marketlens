@@ -1,0 +1,72 @@
+{
+  "conteudo": [
+    {
+      "produto": {
+        "codigo": "C-COCA2L-001",
+        "descricao": "REFRIG COCA-COLA 2L PET",
+        "descricaoSefaz": "REFRIGERANTE COCA-COLA GARRAFA 2L",
+        "gtin": "7894900011517",
+        "ncm": "22021000",
+        "gpc": "50000000",
+        "unidadeMedida": "UN",
+        "venda": {
+          "dataVenda": "2026-05-11T08:32:11Z",
+          "valorDeclarado": 9.99,
+          "valorVenda": 8.49
+        }
+      },
+      "estabelecimento": {
+        "cnpj": "12345678000100",
+        "razaoSocial": "SUPERMERCADO ALFA LTDA",
+        "nomeFantasia": "ALFA SUPER",
+        "telefone": "8233334444",
+        "endereco": {
+          "nomeLogradouro": "AV FERNANDES LIMA",
+          "numeroImovel": "1500",
+          "bairro": "FAROL",
+          "cep": "57051000",
+          "codigoIBGE": 2704302,
+          "municipio": "MACEIO",
+          "latitude": -9.6498,
+          "longitude": -35.7378
+        }
+      }
+    },
+    {
+      "produto": {
+        "codigo": "C-COCA2L-002",
+        "descricao": "COCO-COLA PET 2L",
+        "gtin": "7894900011517",
+        "ncm": "22021000",
+        "gpc": "50000000",
+        "unidadeMedida": "UN",
+        "venda": {
+          "dataVenda": "2026-05-11T09:14:55Z",
+          "valorDeclarado": 9.99,
+          "valorVenda": 8.99
+        }
+      },
+      "estabelecimento": {
+        "cnpj": "98765432000199",
+        "razaoSocial": "MERCADO BETA EIRELI",
+        "endereco": {
+          "nomeLogradouro": "RUA SAO PEDRO",
+          "numeroImovel": "350",
+          "bairro": "PONTA VERDE",
+          "cep": "57035000",
+          "codigoIBGE": 2704302,
+          "municipio": "MACEIO",
+          "latitude": -9.6661,
+          "longitude": -35.7203
+        }
+      }
+    }
+  ],
+  "pagina": 1,
+  "primeiraPagina": true,
+  "registrosPagina": 2,
+  "registrosPorPagina": 100,
+  "totalPaginas": 1,
+  "totalRegistros": 2,
+  "ultimaPagina": true
+}

@@ -1,0 +1,41 @@
+{
+  "conteudo": [
+    {
+      "produto": {
+        "codigo": "C-GEO-ZERO",
+        "descricao": "REFRIG COCA-COLA 2L PET",
+        "descricaoSefaz": "REFRIGERANTE COCA-COLA GARRAFA 2L",
+        "gtin": "7894900011517",
+        "ncm": "22021000",
+        "gpc": "50000000",
+        "unidadeMedida": "UN",
+        "venda": {
+          "dataVenda": "2026-05-11T10:00:00Z",
+          "valorDeclarado": 9.99,
+          "valorVenda": 8.5
+        }
+      },
+      "estabelecimento": {
+        "cnpj": "11111111000111",
+        "razaoSocial": "SUPER VAREJO ATACADO LTDA",
+        "endereco": {
+          "nomeLogradouro": "AV DESCONHECIDA",
+          "numeroImovel": "S/N",
+          "bairro": "CENTRO",
+          "cep": "57000000",
+          "codigoIBGE": 2704302,
+          "municipio": "MACEIO",
+          "latitude": 0,
+          "longitude": 0
+        }
+      }
+    }
+  ],
+  "pagina": 1,
+  "primeiraPagina": true,
+  "registrosPagina": 1,
+  "registrosPorPagina": 100,
+  "totalPaginas": 1,
+  "totalRegistros": 1,
+  "ultimaPagina": true
+}

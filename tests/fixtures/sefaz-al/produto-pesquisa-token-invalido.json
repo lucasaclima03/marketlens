@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-05-11T10:00:00.000+00:00",
+  "status": 500,
+  "error": "Internal Server Error",
+  "exception": "br.gov.al.sefaz.economiza.api.exception.ApplicationException",
+  "message": "Autorização do aplicativo não encontrada",
+  "path": "/sfz-economiza-alagoas-api/api/public/produto/pesquisa"
+}
