@@ -34,27 +34,18 @@ export const priceObservations = pgTable(
     quality_flag: text('quality_flag'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({
-    currentRowUnique: uniqueIndex('price_observations_current_row_idx')
+  (t) => [
+    uniqueIndex('price_observations_current_row_idx')
       .on(t.product_id, t.establishment_id)
       .where(sql`valid_until = 'infinity'::timestamptz`),
-    productTimeIdx: index('price_observations_product_time_idx').on(
-      t.product_id,
-      t.fetched_at.desc(),
-    ),
-    establishmentTimeIdx: index('price_observations_establishment_time_idx').on(
-      t.establishment_id,
-      t.fetched_at.desc(),
-    ),
-    qualityFlagValid: check(
+    index('price_observations_product_time_idx').on(t.product_id, t.fetched_at.desc()),
+    index('price_observations_establishment_time_idx').on(t.establishment_id, t.fetched_at.desc()),
+    check(
       'price_observations_quality_flag_valid',
       sql`quality_flag IS NULL OR quality_flag IN ('price_anomaly', 'ncm_mismatch', 'geo_invalid')`,
     ),
-    lastSeenAfterFetched: check(
-      'price_observations_last_seen_after_fetched',
-      sql`last_seen_at >= fetched_at`,
-    ),
-  }),
+    check('price_observations_last_seen_after_fetched', sql`last_seen_at >= fetched_at`),
+  ],
 );
 
 export type PriceObservationRow = typeof priceObservations.$inferSelect;

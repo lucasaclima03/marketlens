@@ -24,10 +24,10 @@ export const establishments = pgTable(
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({
-    cnpjRootIdx: index('establishments_cnpj_root_idx').on(t.cnpj_root),
-    municipalityIdx: index('establishments_municipality_idx').on(t.municipality_ibge_code),
-  }),
+  (t) => [
+    index('establishments_cnpj_root_idx').on(t.cnpj_root),
+    index('establishments_municipality_idx').on(t.municipality_ibge_code),
+  ],
 );
 
 export type EstablishmentRow = typeof establishments.$inferSelect;

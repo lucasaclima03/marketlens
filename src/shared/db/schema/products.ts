@@ -13,18 +13,18 @@ export const products = pgTable(
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({
-    gtinUnique: uniqueIndex('products_gtin_unique_idx')
+  (t) => [
+    uniqueIndex('products_gtin_unique_idx')
       .on(t.gtin)
       .where(sql`gtin IS NOT NULL`),
-    fallbackHashUnique: uniqueIndex('products_fallback_hash_unique_idx')
+    uniqueIndex('products_fallback_hash_unique_idx')
       .on(t.fallback_hash)
       .where(sql`fallback_hash IS NOT NULL`),
-    exactlyOneId: check(
+    check(
       'products_exactly_one_id',
       sql`(gtin IS NOT NULL)::int + (fallback_hash IS NOT NULL)::int = 1`,
     ),
-  }),
+  ],
 );
 
 export type ProductRow = typeof products.$inferSelect;

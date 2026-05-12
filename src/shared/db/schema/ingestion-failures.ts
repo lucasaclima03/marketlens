@@ -9,10 +9,10 @@ export const ingestionFailures = pgTable(
     raw_payload: jsonb('raw_payload').notNull(),
     occurred_at: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({
-    reasonIdx: index('ingestion_failures_reason_idx').on(t.reason),
-    occurredAtIdx: index('ingestion_failures_occurred_at_idx').on(t.occurred_at.desc()),
-  }),
+  (t) => [
+    index('ingestion_failures_reason_idx').on(t.reason),
+    index('ingestion_failures_occurred_at_idx').on(t.occurred_at.desc()),
+  ],
 );
 
 export type IngestionFailureRow = typeof ingestionFailures.$inferSelect;
