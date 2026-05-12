@@ -1,5 +1,5 @@
 {
-  "id": "12d16487-5001-45eb-a6b4-96572e96bff9",
+  "id": "4526b51b-aff5-4177-b49e-ad947197b835",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -331,13 +331,13 @@
         },
         "declared_value": {
           "name": "declared_value",
-          "type": "numeric(12, 4)",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
         },
         "sale_value": {
           "name": "sale_value",
-          "type": "numeric(12, 4)",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
         },

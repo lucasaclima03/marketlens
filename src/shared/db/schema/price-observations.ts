@@ -25,8 +25,8 @@ export const priceObservations = pgTable(
     fetched_at: timestamp('fetched_at', { withTimezone: true }).notNull(),
     last_seen_at: timestamp('last_seen_at', { withTimezone: true }).notNull(),
     sold_at: timestamp('sold_at', { withTimezone: true }).notNull(),
-    declared_value: numeric('declared_value', { precision: 12, scale: 4 }).notNull(),
-    sale_value: numeric('sale_value', { precision: 12, scale: 4 }).notNull(),
+    declared_value: numeric('declared_value', { precision: 10, scale: 2 }).notNull(),
+    sale_value: numeric('sale_value', { precision: 10, scale: 2 }).notNull(),
     valid_until: timestamp('valid_until', { withTimezone: true })
       .notNull()
       .default(sql`'infinity'::timestamptz`),
