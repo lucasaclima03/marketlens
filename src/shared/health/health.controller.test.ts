@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import type { Server } from 'node:http';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { HealthCheckService, HealthIndicatorService } from '@nestjs/terminus';
@@ -9,6 +10,19 @@ import { DATABASE } from '../db/db.module.js';
 import { QUEUE_CURATED_SEED } from '../bullmq/queues.js';
 
 type IndicatorStub = ReturnType<HealthIndicatorService['check']>;
+
+interface HealthIndicatorResult {
+  readonly status: string;
+  readonly message?: string;
+}
+
+interface HealthResponseBody {
+  readonly status: 'ok' | 'error';
+  readonly details: {
+    readonly postgres: HealthIndicatorResult;
+    readonly redis: HealthIndicatorResult;
+  };
+}
 
 function indicatorStub(name: string): IndicatorStub {
   return {
@@ -33,6 +47,7 @@ const healthCheckServiceStub = {
 
 describe('HealthController', () => {
   let app: INestApplication;
+  let httpServer: Server;
   const dbExecute = vi.fn();
   const redisPing = vi.fn();
 
@@ -51,6 +66,7 @@ describe('HealthController', () => {
     }).compile();
     app = moduleRef.createNestApplication();
     await app.init();
+    httpServer = app.getHttpServer() as Server;
   });
 
   afterAll(async () => {
@@ -61,31 +77,34 @@ describe('HealthController', () => {
     dbExecute.mockResolvedValueOnce(undefined);
     redisPing.mockResolvedValueOnce('PONG');
 
-    const res = await request(app.getHttpServer()).get('/health');
+    const res = await request(httpServer).get('/health');
+    const body = res.body as HealthResponseBody;
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('ok');
-    expect(res.body.details.postgres.status).toBe('up');
-    expect(res.body.details.redis.status).toBe('up');
+    expect(body.status).toBe('ok');
+    expect(body.details.postgres.status).toBe('up');
+    expect(body.details.redis.status).toBe('up');
   });
 
   it('marks Postgres down when SELECT 1 throws', async () => {
     dbExecute.mockRejectedValueOnce(new Error('db unreachable'));
     redisPing.mockResolvedValueOnce('PONG');
 
-    const res = await request(app.getHttpServer()).get('/health');
+    const res = await request(httpServer).get('/health');
+    const body = res.body as HealthResponseBody;
 
-    expect(res.body.details.postgres.status).toBe('down');
-    expect(res.body.details.postgres.message).toBe('db unreachable');
+    expect(body.details.postgres.status).toBe('down');
+    expect(body.details.postgres.message).toBe('db unreachable');
   });
 
   it('marks Redis down when PING reply is unexpected', async () => {
     dbExecute.mockResolvedValueOnce(undefined);
     redisPing.mockResolvedValueOnce('WRONG');
 
-    const res = await request(app.getHttpServer()).get('/health');
+    const res = await request(httpServer).get('/health');
+    const body = res.body as HealthResponseBody;
 
-    expect(res.body.details.redis.status).toBe('down');
-    expect(res.body.details.redis.message).toBe('unexpected reply');
+    expect(body.details.redis.status).toBe('down');
+    expect(body.details.redis.message).toBe('unexpected reply');
   });
 });
