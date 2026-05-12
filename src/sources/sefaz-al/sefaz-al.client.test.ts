@@ -44,6 +44,7 @@ describe('SefazAlClient.fetch', () => {
     expect(capture.lastBody).toEqual({
       produto: { gtin: '7894900011517' },
       estabelecimento: { municipio: { codigoIBGE: 2704302 } },
+      dias: 1,
     });
   });
 
