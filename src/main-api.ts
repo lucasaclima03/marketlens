@@ -7,7 +7,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter as BullBoardExpressAdapter } from '@bull-board/express';
 import { getQueueToken } from '@nestjs/bullmq';
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import { Queue } from 'bullmq';
 import { AppModule } from './app.module.js';
 import type { Env } from './shared/config/env.schema.js';
@@ -32,7 +32,7 @@ async function bootstrap(): Promise<void> {
     const bullBoard = new BullBoardExpressAdapter();
     bullBoard.setBasePath(BULL_BOARD_BASE_PATH);
     createBullBoard({ queues: [new BullMQAdapter(queue)], serverAdapter: bullBoard });
-    server.use(BULL_BOARD_BASE_PATH, bullBoard.getRouter());
+    server.use(BULL_BOARD_BASE_PATH, bullBoard.getRouter() as RequestHandler);
   }
 
   await app.listen(port);
