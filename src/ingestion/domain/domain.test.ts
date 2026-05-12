@@ -10,32 +10,6 @@ import type { JobContext } from './job-context.js';
 import type { RawPriceObservation } from './raw-price-observation.js';
 import { err, ok } from './result.js';
 
-const sampleRaw: RawPriceObservation = {
-  source_id: 'sefaz-al',
-  gtin: '07891000100103',
-  source_canonical_description: null,
-  raw_description: 'LEITE INTEGRAL UHT 1L',
-  fiscal_code: '04012010',
-  category_gpc_code: '10000045',
-  unit_of_measure: 'UN',
-  declared_value: 5.49,
-  sale_value: 4.99,
-  sold_at: new Date('2026-05-10T12:00:00Z'),
-  establishment: {
-    cnpj: '12345678000199',
-    legal_name: 'Mercado Exemplo LTDA',
-    trade_name: null,
-    street: 'Rua A',
-    street_number: '100',
-    neighborhood: 'Centro',
-    postal_code: '57000000',
-    municipality_ibge_code: '2704302',
-    municipality_name: 'Maceió',
-    latitude: -9.66599,
-    longitude: -35.735,
-  },
-};
-
 describe('Result', () => {
   it('ok() wraps a value with ok:true', () => {
     expect(ok(42)).toEqual({ ok: true, value: 42 });
@@ -83,13 +57,33 @@ describe('Result', () => {
 });
 
 describe('HardRejection', () => {
-  it('hardRejection() builds a rejection with reason and payload', () => {
-    const rejection = hardRejection('gtin_invalid_check_digit', sampleRaw);
-    expect(rejection.reason).toBe('gtin_invalid_check_digit');
-    expect(rejection.raw_payload).toBe(sampleRaw);
-  });
+  const sampleRaw: RawPriceObservation = {
+    source_id: 'sefaz-al',
+    gtin: '07891000100103',
+    source_canonical_description: null,
+    raw_description: 'LEITE INTEGRAL UHT 1L',
+    fiscal_code: '04012010',
+    category_gpc_code: '10000045',
+    unit_of_measure: 'UN',
+    declared_value: 5.49,
+    sale_value: 4.99,
+    sold_at: new Date('2026-05-10T12:00:00Z'),
+    establishment: {
+      cnpj: '12345678000199',
+      legal_name: 'Mercado Exemplo LTDA',
+      trade_name: null,
+      street: 'Rua A',
+      street_number: '100',
+      neighborhood: 'Centro',
+      postal_code: '57000000',
+      municipality_ibge_code: '2704302',
+      municipality_name: 'Maceió',
+      latitude: -9.66599,
+      longitude: -35.735,
+    },
+  };
 
-  it('HARD_REJECTION_REASONS lists the closed enum (exactly 3 reasons)', () => {
+  it('HARD_REJECTION_REASONS lists the closed enum (exactly 3 reasons, in declared order)', () => {
     expect(HARD_REJECTION_REASONS).toEqual([
       'gtin_invalid_length',
       'gtin_invalid_check_digit',
@@ -98,7 +92,7 @@ describe('HardRejection', () => {
     expect(HARD_REJECTION_REASONS).toHaveLength(3);
   });
 
-  it.each([...HARD_REJECTION_REASONS])('hardRejection() accepts reason %s', (reason) => {
+  it.each(HARD_REJECTION_REASONS)('hardRejection() accepts reason %s', (reason) => {
     const rejection = hardRejection(reason, sampleRaw);
     expect(rejection.reason).toBe(reason);
     expect(rejection.raw_payload).toBe(sampleRaw);
@@ -113,7 +107,7 @@ describe('HardRejection', () => {
 });
 
 describe('IngestionResult', () => {
-  it('emptyIngestionResult() returns all counters at zero', () => {
+  it('emptyIngestionResult() returns all five counters at zero', () => {
     expect(emptyIngestionResult()).toEqual({
       fetched: 0,
       persisted: 0,
@@ -135,13 +129,6 @@ describe('IngestionResult', () => {
     first.fetched = 999;
     const second = emptyIngestionResult();
     expect(second.fetched).toBe(0);
-  });
-
-  it('emptyIngestionResult() exposes exactly the five expected counter keys', () => {
-    const byLocale = (a: string, b: string): number => a.localeCompare(b);
-    expect(Object.keys(emptyIngestionResult()).sort(byLocale)).toEqual(
-      ['extended', 'fetched', 'persisted', 'rejected', 'skipped'].sort(byLocale),
-    );
   });
 });
 
