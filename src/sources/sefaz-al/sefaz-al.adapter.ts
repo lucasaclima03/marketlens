@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import type { RawPriceObservation } from '../../ingestion/domain/raw-price-observation.js';
 import type { SefazAlPriceItem } from './sefaz-al.schemas.js';
 
+export const SOURCE_ID_SEFAZ_AL = 'sefaz-al';
+
 @Injectable()
 export class SefazAlAdapter {
   adapt(item: SefazAlPriceItem): RawPriceObservation {
     return {
-      source_id: 'sefaz-al',
+      source_id: SOURCE_ID_SEFAZ_AL,
       gtin: item.produto.gtin,
       source_canonical_description: item.produto.descricaoSefaz ?? null,
       raw_description: item.produto.descricao,

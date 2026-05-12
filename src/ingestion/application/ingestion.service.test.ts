@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { buildRaw as buildBaseRaw } from '../../../tests/helpers/raw-builder.js';
 import { SefazAlClient } from '../../sources/sefaz-al/sefaz-al.client.js';
 import type {
   SefazAlPriceItem,
@@ -24,31 +25,8 @@ const buildItem = (gtin: string): SefazAlPriceItem =>
     estabelecimento: {} as unknown,
   }) as unknown as SefazAlPriceItem;
 
-const buildRaw = (gtin: string, sale: number): RawPriceObservation => ({
-  source_id: 'sefaz-al',
-  gtin,
-  source_canonical_description: null,
-  raw_description: 'X',
-  fiscal_code: '22021000',
-  category_gpc_code: '50000000',
-  unit_of_measure: 'UN',
-  declared_value: sale + 1,
-  sale_value: sale,
-  sold_at: new Date('2026-05-11T10:00:00Z'),
-  establishment: {
-    cnpj: '12345678000100',
-    legal_name: 'X',
-    trade_name: null,
-    street: null,
-    street_number: null,
-    neighborhood: 'X',
-    postal_code: null,
-    municipality_ibge_code: '2704302',
-    municipality_name: 'MACEIO',
-    latitude: null,
-    longitude: null,
-  },
-});
+const buildRaw = (gtin: string, sale: number): RawPriceObservation =>
+  buildBaseRaw({ gtin, sale_value: sale, declared_value: sale + 1 });
 
 const buildResponse = (items: SefazAlPriceItem[]): SefazAlPriceResponse => ({
   conteudo: items,

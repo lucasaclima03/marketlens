@@ -58,14 +58,7 @@ export class IngestionService {
       return { ...acc, skipped: acc.skipped + 1 };
     }
 
-    const persisted = await this.pipeline.priceRepo.persist({
-      product_id: normalized.data.product_id,
-      establishment_id: normalized.data.establishment_id,
-      declared_value: normalized.data.declared_value,
-      sale_value: normalized.data.sale_value,
-      sold_at: normalized.data.sold_at,
-      source_id: normalized.data.source_id,
-    });
+    const persisted = await this.pipeline.priceRepo.persist(normalized.data);
 
     this.emitPersistEvent(persisted, normalized);
     return persisted.outcome === 'extended'
@@ -74,16 +67,13 @@ export class IngestionService {
   }
 
   private async recordRejection(rejection: HardRejection): Promise<void> {
-    await this.pipeline.failureRepo.record({
+    const payload = {
       source_id: rejection.raw_payload.source_id,
       reason: rejection.reason,
       raw_payload: rejection.raw_payload,
-    });
-    this.events.emit(EVENT_INGESTION_REJECTED, {
-      source_id: rejection.raw_payload.source_id,
-      reason: rejection.reason,
-      raw_payload: rejection.raw_payload,
-    });
+    };
+    await this.pipeline.failureRepo.record(payload);
+    this.events.emit(EVENT_INGESTION_REJECTED, payload);
   }
 
   private emitPersistEvent(
