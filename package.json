@@ -9,7 +9,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b tsconfig.build.json",
     "start:dev:api": "node --import @swc-node/register/esm-register --watch src/main-api.ts",
     "start:dev:worker": "node --import @swc-node/register/esm-register --watch src/main-worker.ts",
     "start:api": "node dist/main-api.js",

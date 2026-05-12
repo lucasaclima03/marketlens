@@ -25,6 +25,7 @@ export const priceObservations = pgTable(
     fetched_at: timestamp('fetched_at', { withTimezone: true }).notNull(),
     last_seen_at: timestamp('last_seen_at', { withTimezone: true }).notNull(),
     sold_at: timestamp('sold_at', { withTimezone: true }).notNull(),
+    // scale must match NUMERIC_SCALE in src/ingestion/domain/numeric-scale.ts
     declared_value: numeric('declared_value', { precision: 10, scale: 2 }).notNull(),
     sale_value: numeric('sale_value', { precision: 10, scale: 2 }).notNull(),
     valid_until: timestamp('valid_until', { withTimezone: true })

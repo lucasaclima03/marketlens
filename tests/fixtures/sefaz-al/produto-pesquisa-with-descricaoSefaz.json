@@ -1,0 +1,41 @@
+{
+  "conteudo": [
+    {
+      "produto": {
+        "codigo": "C-WITH-DESC",
+        "descricao": "REFR COCA 2L PT",
+        "descricaoSefaz": "REFRIGERANTE COCA-COLA GARRAFA 2L",
+        "gtin": "7894900011517",
+        "ncm": "22021000",
+        "gpc": "50000000",
+        "unidadeMedida": "UN",
+        "venda": {
+          "dataVenda": "2026-05-11T10:00:00Z",
+          "valorDeclarado": 9.99,
+          "valorVenda": 8.5
+        }
+      },
+      "estabelecimento": {
+        "cnpj": "12345678000100",
+        "razaoSocial": "SUPERMERCADO ALFA LTDA",
+        "endereco": {
+          "nomeLogradouro": "AV FERNANDES LIMA",
+          "numeroImovel": "1500",
+          "bairro": "FAROL",
+          "cep": "57051000",
+          "codigoIBGE": 2704302,
+          "municipio": "MACEIO",
+          "latitude": -9.6498,
+          "longitude": -35.7378
+        }
+      }
+    }
+  ],
+  "pagina": 1,
+  "primeiraPagina": true,
+  "registrosPagina": 1,
+  "registrosPorPagina": 100,
+  "totalPaginas": 1,
+  "totalRegistros": 1,
+  "ultimaPagina": true
+}
