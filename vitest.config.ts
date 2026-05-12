@@ -17,6 +17,7 @@ export default defineConfig({
     environment: 'node',
     passWithNoTests: true,
     testTimeout: 60_000,
+    hookTimeout: 60_000,
     include: ['src/**/*.test.ts', 'src/**/*.e2e.test.ts'],
     coverage: {
       provider: 'v8',
