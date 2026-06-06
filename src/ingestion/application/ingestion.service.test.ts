@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { buildRaw as buildBaseRaw } from '../../../tests/helpers/raw-builder.js';
 import { SefazAlClient } from '../../sources/sefaz-al/sefaz-al.client.js';
+import type { SefazAlAdapter } from '../../sources/sefaz-al/sefaz-al.adapter.js';
 import type {
   SefazAlPriceItem,
   SefazAlPriceResponse,
@@ -41,7 +42,7 @@ const buildResponse = (items: SefazAlPriceItem[]): SefazAlPriceResponse => ({
 
 describe('IngestionService.ingest', () => {
   let client: { fetch: ReturnType<typeof vi.fn> };
-  let adapter: { adapt: ReturnType<typeof vi.fn> };
+  let adapter: { adapt: Mock<SefazAlAdapter['adapt']> };
   let validator: { validate: ReturnType<typeof vi.fn> };
   let normalization: { normalize: ReturnType<typeof vi.fn> };
   let priceRepo: { persist: ReturnType<typeof vi.fn> };
@@ -52,7 +53,7 @@ describe('IngestionService.ingest', () => {
 
   beforeEach(() => {
     client = { fetch: vi.fn() };
-    adapter = { adapt: vi.fn() };
+    adapter = { adapt: vi.fn<SefazAlAdapter['adapt']>() };
     validator = { validate: vi.fn() };
     normalization = { normalize: vi.fn() };
     priceRepo = { persist: vi.fn() };

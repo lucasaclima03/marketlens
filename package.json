@@ -48,7 +48,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.19.18",
     "@types/supertest": "^7.2.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^4.1.8",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.4",
@@ -63,7 +63,7 @@
     "typescript": "5.6",
     "typescript-eslint": "^8.59.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.8"
   },
   "dependencies": {
     "@bull-board/api": "^6.21.3",
