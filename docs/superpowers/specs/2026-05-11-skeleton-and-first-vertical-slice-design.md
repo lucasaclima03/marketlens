@@ -48,7 +48,7 @@ $ git push       # CI green: lint, typecheck, test, build, security
 
 End-to-end ingestion of one GTIN via BullMQ:
 
-- A CLI command (`npm run cli enqueue --gtin=<G> --municipality-ibge=<I>`) enqueues a job on the `curated-seed` BullMQ queue
+- A CLI command (`npm run cli enqueue --gtin=<G> --municipality-ibge-code=<I>`) enqueues a job on the `curated-seed` BullMQ queue
 - The Worker process consumes the job, runs the full 8-verb pipeline (`fetch → adapt → validate → normalize → persist`), and emits domain events (`PriceObservationCreated`, `PriceObservationExtended`, `IngestionRejected`)
 - Real call to `POST /produto/pesquisa` against SEFAZ AL with the configured `SEFAZ_APP_TOKEN`
 - Each `SefazAlPriceItem` from the response goes through the pipeline; SCD Type 2 inserts/extends rows in `price_observations`; HardRejections go to `ingestion_failures`
@@ -59,8 +59,8 @@ End-to-end ingestion of one GTIN via BullMQ:
 $ docker-compose -f docker-compose.dev.yml up -d
 $ npm run db:migrate                                    # 1 migration: initial schema
 $ npm run start:dev:worker &
-$ npm run cli enqueue --gtin=7894900011517 --municipality-ibge=2704302
-  → Job enqueued: id=curated-seed:7894900011517:2704302:2026051114
+$ npm run cli enqueue --gtin=7894900011517 --municipality-ibge-code=2704302
+  → Job enqueued: id=curated-seed_7894900011517_2704302_2026-05-11T14
 
 # ~10s later (SEFAZ latency + persist):
 $ psql -c "SELECT count(*) FROM price_observations
@@ -191,7 +191,7 @@ marketlens/
 │   │       └── queues.ts                   # queue name constants
 │   ├── cli/
 │   │   ├── main.ts                         # CLI entrypoint (standalone Nest context)
-│   │   ├── enqueue.command.ts              # nest-commander: enqueue --gtin --municipality-ibge
+│   │   ├── enqueue.command.ts              # nest-commander: enqueue --gtin --municipality-ibge-code
 │   │   └── cli.module.ts
 │   ├── app.module.ts                       # root module (imports per-process)
 │   ├── main-api.ts                         # API entrypoint
@@ -238,11 +238,11 @@ marketlens/
 ### 3.3 Pipeline data flow (M2 — runtime)
 
 ```
-[CLI] npm run cli enqueue --gtin=… --municipality-ibge=…
+[CLI] npm run cli enqueue --gtin=… --municipality-ibge-code=…
    │
    ▼
 [BullMQ] curated-seed queue (Redis)
-   │  jobId = curated-seed:${gtin}:${ibge}:${hour_bucket}    (deterministic)
+   │  jobId = curated-seed_${gtin}_${ibge}_${hour_bucket}    (deterministic)
    │  attempts: 3, backoff: exponential 5s/10s/20s
    ▼
 [CuratedSeedProcessor] Worker picks up job
@@ -920,11 +920,13 @@ Bull Board is mounted on the API process so the queue UI lives at the HTTP surfa
 
 ```typescript
 const hourBucket = new Date().toISOString().slice(0, 13); // '2026-05-11T14'
-const jobId = `curated-seed:${gtin}:${municipalityIbgeCode}:${hourBucket}`;
+const jobId = `curated-seed_${gtin}_${municipalityIbgeCode}_${hourBucket}`;
 queue.add('ingest', { gtin, municipalityIbgeCode }, { jobId });
 ```
 
 Re-enqueueing the same `(gtin, municipality, hour)` is a no-op — protects against double-fire from cron bugs (when M3 cron lands) and from a developer accidentally hammering the CLI.
+
+The separator is `_`, not `:`. BullMQ uses `:` internally to namespace its Redis keys (`bull:curated-seed:<jobId>`); a `:` inside the jobId itself would blur that boundary and make keys harder to read and grep. Keep the underscore.
 
 ### 9.6 Graceful shutdown
 
