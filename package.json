@@ -70,7 +70,7 @@
     "@bull-board/express": "^6.21.3",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bullmq": "^11.0.4",
-    "@nestjs/common": "^11.1.21",
+    "@nestjs/common": "^11.1.26",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.21",
     "@nestjs/event-emitter": "^3.1.0",
