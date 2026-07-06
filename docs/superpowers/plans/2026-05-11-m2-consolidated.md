@@ -382,7 +382,7 @@ git commit -m "feat(db): add price_observations SCD2 schema with partial unique 
 
 ## Task 5: Define the `ingestion_failures` Drizzle schema
 
-The `ingestion_failures` table is the authoritative log for HardRejections (per ADR-0008 boundary, formalised later — M2 only uses the `reason` enum locked in spec §8). `raw_payload` is `jsonb` and stores the canonical `RawPriceObservation` that was rejected, not the original SEFAZ item — this keeps the failure log source-agnostic (per ADR-0001).
+The `ingestion_failures` table is the authoritative log for HardRejections (per the HardRejection vs QualityFlag boundary, formalised in a future ADR — M2 only uses the `reason` enum locked in spec §8). `raw_payload` is `jsonb` and stores the canonical `RawPriceObservation` that was rejected, not the original SEFAZ item — this keeps the failure log source-agnostic (per ADR-0001).
 
 **Files:**
 
@@ -4404,7 +4404,7 @@ In the Worker terminal, within ~10 seconds you should see structured log lines:
 - `curated-seed job <id> starting: gtin=7894900011517, ibge=2704302`
 - `curated-seed job <id> done: {"fetched":N,"persisted":M,"extended":0,"rejected":R,"skipped":S}`
 
-If the Worker logs an error containing `"Autorização do aplicativo não encontrada"`, the token is wrong — Step 1 was passed incorrectly. The BullMQ default retry will fire 3 times before giving up (this is sub-optimal; ADR-0014 fixes it later, deferred per spec §12).
+If the Worker logs an error containing `"Autorização do aplicativo não encontrada"`, the token is wrong — Step 1 was passed incorrectly. The BullMQ default retry will fire 3 times before giving up (this is sub-optimal; a future retry-policy ADR fixes it later, deferred per spec §12).
 
 - [ ] **Step 5: Assert database state**
 
@@ -4520,11 +4520,11 @@ M2 is done when:
 
 When M2 is merged, M3 starts. M3 candidates (in rough order, each becomes its own ADR + spec + plan triple):
 
-- ADR-0014 retry filter for SEFAZ HTTP 500 with `"autoriza"` body.
+- Future retry-policy ADR: filter for SEFAZ HTTP 500 with `"autoriza"` body.
 - `@nestjs/schedule` cron jobs feeding `curated-seed` on the 1h cadence (ADR-0002).
-- `OutlierDetector` listener populating `quality_flag` (z-score, NCM mismatch, geo invalid) — ADR-0008.
+- `OutlierDetector` listener populating `quality_flag` (z-score, NCM mismatch, geo invalid) — future HardRejection vs QualityFlag ADR.
 - Observability stack runtime: Prometheus scraping `/metrics` from API and Worker, Grafana dashboards (ADR-0004), event listeners materializing the four counters defined in CONTEXT.md and ADR-0004 line 351.
-- `/v1/search` HTTP endpoint (ADR-0006 search strategy, Postgres FTS per ADR-0012).
+- `/v1/search` HTTP endpoint (future ADRs: search strategy, Postgres FTS).
 - Curated `config/chains.yaml` seed (top 20 retailers in Alagoas) + `db:seed-chains` script.
 
 Material that surfaces as side-effects during M2 implementation (lived gotchas, surprising errors, unexpected SEFAZ responses, ESLint Tier S frictions) feeds the article backlog tracked in the memory `project_adr_and_article_plan.md`.
