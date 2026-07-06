@@ -42,7 +42,7 @@
     "@commitlint/config-conventional": "^19.8.1",
     "@nestjs/testing": "^11.1.21",
     "@swc-node/register": "^1.11.1",
-    "@swc/core": "^1.15.40",
+    "@swc/core": "^1.15.43",
     "@testcontainers/postgresql": "^10.28.0",
     "@testcontainers/redis": "^10.28.0",
     "@types/express": "^5.0.6",
