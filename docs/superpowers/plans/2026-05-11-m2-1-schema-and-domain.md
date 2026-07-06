@@ -326,7 +326,7 @@ git commit -m "feat(db): add price_observations SCD2 schema with partial unique 
 
 ## Task 5: Define the `ingestion_failures` Drizzle schema
 
-The `ingestion_failures` table is the authoritative log for HardRejections (per ADR-0008 boundary, formalised later — M2 only uses the `reason` enum locked in spec §8). `raw_payload` is `jsonb` and stores the canonical `RawPriceObservation` that was rejected, not the original SEFAZ item — this keeps the failure log source-agnostic (per ADR-0001).
+The `ingestion_failures` table is the authoritative log for HardRejections (per the HardRejection vs QualityFlag boundary, formalised in a future ADR — M2 only uses the `reason` enum locked in spec §8). `raw_payload` is `jsonb` and stores the canonical `RawPriceObservation` that was rejected, not the original SEFAZ item — this keeps the failure log source-agnostic (per ADR-0001).
 
 **Files:**
 

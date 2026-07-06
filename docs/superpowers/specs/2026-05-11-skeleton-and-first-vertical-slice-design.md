@@ -81,18 +81,18 @@ $ git push          # CI green
 
 ### 2.3 Explicitly out of scope (deferred to later slices)
 
-| Capability                                                    | Deferred to                        | Rationale                                                                               |
-| ------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------- |
-| HTTP search endpoint (`/v1/search`)                           | M3+ (after observability)          | Read-side concerns are independent of ingestion                                         |
-| Cron scheduling (`@nestjs/schedule`)                          | M3                                 | M2 proves manual enqueue; cron is a single-decision delta                               |
-| Prometheus metrics + `/metrics` endpoint                      | M3 (formalised in ADR-0004 stack)  | Mixing observability into M2 dilutes the slice                                          |
-| Discovery queue (`discovery-crawl`, sweeps)                   | M4                                 | Independent ingestion strategy (ADR-0003)                                               |
-| Combustível pipeline                                          | M5                                 | Different schema shape, distinct adapter                                                |
-| `quality_flag` populated (z-score, NCM mismatch, geo invalid) | M3 (ADR-0008)                      | Requires `OutlierDetector` listener; column exists in schema, populated later           |
-| Retry filter for SEFAZ HTTP 500 with "autoriza" body          | M2.x or M3 (ADR-0014)              | M2 default BullMQ retry retries 3× even on auth failures (sub-optimal but not blocking) |
-| Postgres FTS columns + indexes for search                     | M3 (ADR-0012)                      | Search not in M2                                                                        |
-| PostGIS geometry columns + heatmap                            | when geo heatmap becomes a feature | YAGNI for MVP                                                                           |
-| Frontend (any)                                                | separate repo, post-MVP            | API-first                                                                               |
+| Capability                                                    | Deferred to                                   | Rationale                                                                               |
+| ------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| HTTP search endpoint (`/v1/search`)                           | M3+ (after observability)                     | Read-side concerns are independent of ingestion                                         |
+| Cron scheduling (`@nestjs/schedule`)                          | M3                                            | M2 proves manual enqueue; cron is a single-decision delta                               |
+| Prometheus metrics + `/metrics` endpoint                      | M3 (formalised in ADR-0004 stack)             | Mixing observability into M2 dilutes the slice                                          |
+| Discovery queue (`discovery-crawl`, sweeps)                   | M4                                            | Independent ingestion strategy (ADR-0003)                                               |
+| Combustível pipeline                                          | M5                                            | Different schema shape, distinct adapter                                                |
+| `quality_flag` populated (z-score, NCM mismatch, geo invalid) | M3 (future ADR: HardRejection vs QualityFlag) | Requires `OutlierDetector` listener; column exists in schema, populated later           |
+| Retry filter for SEFAZ HTTP 500 with "autoriza" body          | M2.x or M3 (future ADR: retry policy)         | M2 default BullMQ retry retries 3× even on auth failures (sub-optimal but not blocking) |
+| Postgres FTS columns + indexes for search                     | M3 (future ADR: Postgres FTS)                 | Search not in M2                                                                        |
+| PostGIS geometry columns + heatmap                            | when geo heatmap becomes a feature            | YAGNI for MVP                                                                           |
+| Frontend (any)                                                | separate repo, post-MVP                       | API-first                                                                               |
 
 ## 3. Architecture
 
@@ -342,7 +342,7 @@ Refinement of the four events from CONTEXT.md, with explicit payload shapes for 
 | `PriceObservationCreated`  | `{ observation_id, product_id, establishment_id, source_id, kind: 'first_observation' \| 'price_change' }` |
 | `PriceObservationExtended` | `{ observation_id, product_id, establishment_id, source_id }`                                              |
 | `IngestionRejected`        | `{ source_id, reason, raw_payload }`                                                                       |
-| `QualityFlagged`           | _not emitted in M2_ — column exists; populated in M3 (ADR-0008)                                            |
+| `QualityFlagged`           | _not emitted in M2_ — column exists; populated in M3 (future ADR: HardRejection vs QualityFlag)            |
 
 The `kind` discriminator on `PriceObservationCreated` is essential for downstream observability: a counter that does not distinguish "first observation of a (product, establishment) pair" from "price change on an existing pair" cannot answer the question "how often do prices actually change?" — which is the whole point of the project. ADR-0004's planned metric `marketlens_price_observations_created_total` MUST be labelled `kind` accordingly. CONTEXT.md's event table will be amended in the same PR to add a payload column.
 
@@ -511,7 +511,7 @@ export const ingestionFailures = pgTable(
 | `quality_flag` CHECK constraint                                                               | Bounded enum at the DB level enforces CONTEXT.md vocabulary even if M3 listener has a bug. Adding a new flag requires a migration — intentional friction that prevents silent free-text values                                                                                                                                                                                                                                  |
 | FK `chain_id` nullable                                                                        | Mom-and-pop establishments without curated chain are legitimate                                                                                                                                                                                                                                                                                                                                                                 |
 | CHECK constraint enforcing exactly one of `(gtin, fallback_hash)`                             | Domain invariant from CONTEXT.md; preserved at DB level                                                                                                                                                                                                                                                                                                                                                                         |
-| `fiscal_code` and `category_gpc_code` NOT NULL                                                | SEFAZ returns these for every standard `/produto/pesquisa` item; `NormalizationService` resolves them before persist (fills GPC from prefix table if SEFAZ omits, falls back to `'unknown_ncm'`/`'unknown_gpc'` sentinel only as last resort, recorded with a `quality_flag` candidate to be defined in ADR-0008)                                                                                                               |
+| `fiscal_code` and `category_gpc_code` NOT NULL                                                | SEFAZ returns these for every standard `/produto/pesquisa` item; `NormalizationService` resolves them before persist (fills GPC from prefix table if SEFAZ omits, falls back to `'unknown_ncm'`/`'unknown_gpc'` sentinel only as last resort, recorded with a `quality_flag` candidate to be defined in a future HardRejection vs QualityFlag ADR)                                                                              |
 
 ## 5. Stack & tooling
 
@@ -987,27 +987,27 @@ Hitting the real SEFAZ API in CI is forbidden. MSW handlers serve fixtures. A se
 
 Recap (also in §2.3):
 
-| Capability                          | Slice                              |
-| ----------------------------------- | ---------------------------------- |
-| HTTP `/v1/search` endpoint          | M3+ (search ADR-0006/0012)         |
-| Cron scheduling                     | M3                                 |
-| Prometheus metrics + `/metrics`     | M3 (ADR-0004 stack)                |
-| Discovery queue                     | M4 (ADR-0003)                      |
-| Combustível pipeline                | M5                                 |
-| `quality_flag` populated            | M3 (ADR-0008)                      |
-| Retry filter for 500 "autoriza"     | M2.x or M3 (ADR-0014)              |
-| Postgres FTS columns/indexes        | M3 (ADR-0012)                      |
-| PostGIS                             | when geo features land             |
-| Frontend                            | post-MVP                           |
-| Bull Board basic auth in production | first deploy                       |
-| Grafana dashboards JSON commit      | M3 (ADR-0004 implementation slice) |
+| Capability                          | Slice                                            |
+| ----------------------------------- | ------------------------------------------------ |
+| HTTP `/v1/search` endpoint          | M3+ (future ADRs: search strategy, Postgres FTS) |
+| Cron scheduling                     | M3                                               |
+| Prometheus metrics + `/metrics`     | M3 (ADR-0004 stack)                              |
+| Discovery queue                     | M4 (ADR-0003)                                    |
+| Combustível pipeline                | M5                                               |
+| `quality_flag` populated            | M3 (future ADR: HardRejection vs QualityFlag)    |
+| Retry filter for 500 "autoriza"     | M2.x or M3 (future ADR: retry policy)            |
+| Postgres FTS columns/indexes        | M3 (future ADR: Postgres FTS)                    |
+| PostGIS                             | when geo features land                           |
+| Frontend                            | post-MVP                                         |
+| Bull Board basic auth in production | first deploy                                     |
+| Grafana dashboards JSON commit      | M3 (ADR-0004 implementation slice)               |
 
 ## 13. Open questions
 
 None blocking M1+M2 implementation. Recurring future questions tracked separately:
 
-- ADR-0008 formalisation of HardRejection vs QualityFlag boundary
-- ADR-0014 retry policy (filter for "autoriza" 500)
+- Future ADR: formalisation of HardRejection vs QualityFlag boundary
+- Future ADR: retry policy (filter for "autoriza" 500)
 - Promotion criteria for Discovery → CuratedSeed (ADR-deferred per ADR-0003)
 - Stale SKU lifecycle (`last_observed_at`, "ghost" handling)
 
